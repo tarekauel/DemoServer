@@ -98,6 +98,9 @@
     var ndInputA = $('#network-distance-company-input-a');
     var ndInputB = $('#network-distance-company-input-b');
 
+    var resultSpreadingActivation = [];
+    var searchNodeSpreadingActivation = {};
+
     $('#spreading-activation-result-table').hide();
     $('#network-distance-result-table').hide();
     jQuery.fn.visible = function() {
@@ -191,15 +194,22 @@
     function spreading_activation() {
         if (selectedCompany[spreadingActivationCompanyInput.attr('id')] != undefined) {
             $.getJSON('spreading_activation?entity=' + selectedCompany[spreadingActivationCompanyInput.attr('id')], function(data) {
-                resultTemp = data;
+                data;
                 maxResult = 0.0;
-                resultTemp.splice(0,1);
+                searchNodeSpreadingActivation = $.grep(data, function(e){ return e.id == selectedCompany[spreadingActivationCompanyInput.attr('id')]; });
+                resultTemp = [];
+                for (var i=0; i!= data.length; ++i) {
+                    if (data[i].id != selectedCompany[spreadingActivationCompanyInput.attr('id')]) {
+                        resultTemp.push(data[i]);
+                    }
+                }
                 for (var i=0; i != resultTemp.length; ++i) {
                     if (parseFloat(resultTemp[i].value) > maxResult) {
                         maxResult = parseFloat(resultTemp[i].value);
                     }
                 }
                 for (var i=0; i != resultTemp.length; ++i) {
+                    resultTemp[i].old_value = resultTemp[i].value;
                     resultTemp[i].value = parseFloat(resultTemp[i].value) / maxResult;
                 }
                 resultSpreadingActivation = resultTemp;
@@ -242,8 +252,6 @@
             }
         }
     }
-
-    resultSpreadingActivation = [];
 
     function createCallback(type,key){
         var new_list = JSON.parse(JSON.stringify(type));
@@ -339,20 +347,25 @@
                     jQuery("#sa-result-" + i).click(createCallbackChangeItem(result[i].name + " (" + result[i].type + ")"));
                     jQuery("#" + identifier + "-show").click(createCallbackShowItems(identifier + "-tracking"));
                     for (var j = 0; j < result[i].tracking.length; ++j) {
-                        var inner_html = "<td colspan='3' class=\"" + identifier + "-tracking tracking\" style=\"display: none\">";
-                        for (var k = 0; k < result[i].tracking[j].length; ++k) {
-                            if (k === 0) {
-                                inner_html += result[0].name + " --> ";
-                            } else {
-                                if (map_reverse[result[i].tracking[j][k].node] != undefined) {
-                                    inner_html += map_reverse[result[i].tracking[j][k].node] + " --> ";
+                        var influence = Math.round(result[i].tracking[j].power / result[i].old_value * result[i].value * 1000)/10.0;
+                        if (influence - 0.01 > 0) {
+                            var inner_html = "<td colspan='2' class=\"" + identifier + "-tracking tracking\" style=\"display: none\">";
+                            for (var k = 0; k < result[i].tracking[j].path.length; ++k) {
+                                if (k === 0) {
+                                    inner_html += result[i].tracking[j].path[k].node + " --> ";
                                 } else {
-                                    inner_html += result[i].tracking[j][k].node + " --> ";
+                                    if (map_reverse[result[i].tracking[j].path[k].node] != undefined) {
+                                        inner_html += map_reverse[result[i].tracking[j].path[k].node] + " --> ";
+                                    } else {
+                                        inner_html += result[i].tracking[j].path[k].node + " --> ";
+                                    }
                                 }
                             }
+                            inner_html += ((result[i].name != "") ? result[i].name + " (" + result[i].type + ")" : result[i].id);
+                            inner_html += "</td><td class=\"" + identifier + "-tracking tracking\" style=\"display: none\">" + influence + "%";
+                            inner_html += "</td>";
+                            $('#spreading-activation-result-table').append($('<tr>').html(inner_html));
                         }
-                        inner_html += map_reverse[result[i].id] + "</td>";
-                        $('#spreading-activation-result-table').append($('<tr>').html(inner_html));
                     }
                 } else {
                     $('#spreading-activation-result-table').append($('<tr>').html("<td><a href=\"#\" id=\"sa-result-" + i + "\">" + ((result[i].name != "") ? result[i].name + " (" + result[i].type + ")" : result[i].id) + "</a></td><td>" + Math.round(parseFloat(result[i].value) * 100) / 1.0 + " %</td><td></td>"));
@@ -363,20 +376,25 @@
                     $('#spreading-activation-result-table').append($('<tr>').html("<td>" + ((result[i].name != "") ? result[i].name + " (" + result[i].type + ")" : idToLink(result[i].id)) + "</td><td>" + Math.round(parseFloat(result[i].value) * 100) / 1.0 + " %</td><td><button id=\"" + identifier + "-show\" class=\"btn btn-default btn-sm\">Explain</button></td>"));
                     jQuery("#" + identifier + "-show").click(createCallbackShowItems(identifier + "-tracking"));
                     for (var j = 0; j < result[i].tracking.length; ++j) {
-                        var inner_html = "<td colspan='3' class=\"" + identifier + "-tracking tracking\" style=\"display: none\">";
-                        for (var k = 0; k < result[i].tracking[j].length; ++k) {
-                            if (k === 0) {
-                                inner_html += result[0].name + " --> ";
-                            } else {
-                                if (map_reverse[result[i].tracking[j][k].node] != undefined) {
-                                    inner_html += map_reverse[result[i].tracking[j][k].node] + " --> ";
+                        var influence = Math.round(result[i].tracking[j].power / result[i].old_value * result[i].value * 1000)/10.0;
+                        if (influence - 0.01 > 0) {
+                            var inner_html = "<td colspan='2' class=\"" + identifier + "-tracking tracking\" style=\"display: none\">";
+                            for (var k = 0; k < result[i].tracking[j].path.length; ++k) {
+                                if (k === 0) {
+                                    inner_html += result[i].tracking[j].path[k].node + " --> ";
                                 } else {
-                                    inner_html += result[i].tracking[j][k].node + " --> ";
+                                    if (map_reverse[result[i].tracking[j].path[k].node] != undefined) {
+                                        inner_html += map_reverse[result[i].tracking[j][k].node] + " --> ";
+                                    } else {
+                                        inner_html += result[i].tracking[j].path[k].node + " --> ";
+                                    }
                                 }
                             }
+                            inner_html += ((result[i].name != "") ? result[i].name + " (" + result[i].type + ")" : result[i].id);
+                            inner_html += "</td><td class=\"" + identifier + "-tracking tracking\" style=\"display: none\">" + influence + "%";
+                            inner_html += "</td>";
+                            $('#spreading-activation-result-table').append($('<tr>').html(inner_html));
                         }
-                        inner_html += result[i].id + "</td>";
-                        $('#spreading-activation-result-table').append($('<tr>').html(inner_html));
                     }
                 } else {
                     $('#spreading-activation-result-table').append($('<tr>').html("<td>" + ((result[i].name != "") ? result[i].name + " (" + result[i].type + ")" : idToLink(result[i].id)) + "</td><td>" + Math.round(parseFloat(result[i].value) * 100) / 1.0 + " %</td><td></td>"));
