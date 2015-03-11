@@ -20,6 +20,7 @@
                 <ul class="nav navbar-nav" role="tablist">
                     <li class="active" role="presentation"><a href="#spreading-activation" aria-controls="spreading-activation" role="tab" data-toggle="tab">Context</a></li>
                     <li role="presentation"><a href="#network-distance" aria-controls="profile" role="tab" data-toggle="tab">Similarity</a></li>
+                    <li role="presentation"><a href="#add-data-triple" aria-controls="profile" role="tab" data-toggle="tab">Add Data Triple</a></li>
                 </ul>
 
             </div><!-- /.navbar-collapse -->
@@ -83,11 +84,104 @@
                 </table>
             </div>
         </div>
+        <div role="tabpanel" class="tab-pane" id="add-data-triple">
+            <form id="add-data-triple-form">
+                <div class="form-group" id="add-data-triple-form-searchbox">
+                    <div data-trigger="focus" data-html="true" data-toggle="popover" id="add-data-triple-subject-popover"
+                         data-placement="right" title="Do you miss a vertex?" data-content='<a href="#" id="show-input-Subject">Click here to add a new vertex</a>'>
+                        <input id="add-data-triple-subject" class="typeahead form-control input-lg" type="text"
+                               placeholder="input an entity name">
+                    </div>
+                    <div>
+                        <div class="dropdown" style="margin: 10px 0" id="add-data-triple-predikat-wrapper" data-trigger="focus" data-html="true" data-toggle="popover"
+                             data-placement="right" title="Do you miss an edge type?" data-content='<a href="#" id="showFormForEdgeTypes">Clicke here to add a new edge type</a>'>
+                            <button class="btn btn-default dropdown-toggle" type="button" id="add-data-triple-predikat" data-toggle="dropdown" aria-expanded="true">
+                                <span id="add-data-triple-predikat-btn-text">select an edge type</span>
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu" role="menu" aria-labelledby="add-data-triple-predikat" id="add-data-triple-predikat-list">
+
+                            </ul>
+                        </div>
+                    </div>
+                    <div data-trigger="focus" data-html="true" data-toggle="popover" id="add-data-triple-object-popover"
+                         data-placement="right" title="Do you miss a vertex?" data-content='<a href="#" id="show-input-Object">Click here to add a new vertex</a>'>
+                        <input id="add-data-triple-object" class="typeahead form-control input-lg" type="text" placeholder="input a company name">
+                    </div>
+                    <div style="text-align: right; margin-top: 25px;">
+                        <button class="btn btn-primary btn-lg" id="add-data-triple-form-button">Send</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">Add a new entity</h4>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <div class="form-group">
+                        <input id="new-vertex-id" class="typeahead form-control" type="text" placeholder="id">
+                            </div><div class="form-group">
+                        <input id="new-vertex-name" class="typeahead form-control" type="text" placeholder="name">
+                        </div>
+                        <div class="dropdown" style="margin: 10px 0">
+                            <button class="btn btn-default dropdown-toggle" type="button" id="new-vertex-type-dropdown" data-toggle="dropdown" aria-expanded="true">
+                                <span id="new-vertex-type-dropdown-text">select an vertex type</span>
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu" role="menu" aria-labelledby="add-data-triple-predikat" id="new-vertex-type-dropdown-list">
+
+                            </ul>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" id="new-vertex-save">Add</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="addEdgeTypesModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Add a new edge type</h4>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label class="control-label" for="new-edge-type-name">Please specify the name of the edge type (no spaces)</label>
+                        <input id="new-edge-type-name" class="typeahead form-control" type="text" placeholder="edge type name">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" id="add-edge-type-save">Add</button>
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- Load jQuery and the typeahead JS files -->
 <script src="js/typeahead.bundle.js"></script>
+<script src="js/modal.js"></script>
+<script src="js/bootstrap-tooltip.js"></script>
+<script src="js/jquery.toaster.js"></script>
 
 <script type="text/javascript">
 
@@ -95,8 +189,18 @@
     var map = {};
     var map_reverse = {};
     var spreadingActivationCompanyInput = $('#spreading-activation-company-input');
+
     var ndInputA = $('#network-distance-company-input-a');
     var ndInputB = $('#network-distance-company-input-b');
+    var addInputA = $('#add-data-triple-subject');
+    var addInputB = $('#add-data-triple-object');
+    var addInputC = $('#add-data-triple-predikat');
+
+    var selectedEdgeType = undefined;
+
+    var allEdgesTypes = [];
+    var allVertexTypes = [];
+    var allVertices = [];
 
     var resultSpreadingActivation = [];
     var searchNodeSpreadingActivation = {};
@@ -115,80 +219,144 @@
     $("#network-distance-error-text-a").invisible();
     $("#network-distance-error-text-b").invisible();
 
+
+    function createCallbackEdges(edge) {
+        return function() {
+            selectEdgeType(edge)
+        }
+    }
+
+    function createEdgesDropDown(edge) {
+        var edges = allEdgesTypes;
+        var edgesDropDown = $('#add-data-triple-predikat-list');
+        edges.sort();
+        edgesDropDown.empty();
+        for (var i = edges.length - 1; i >= 0; i--) {
+            edgesDropDown.prepend('<li role="presentation"><a role="menuitem" tabindex="-1" href="#" id="edges-type-' + edges[i] + '">' + edges[i] + '</a></li>');
+            jQuery("#edges-type-" + edges[i]).click(createCallbackEdges(edges[i]));
+        }
+        if (edge != undefined) {
+            selectEdgeType(edge);
+        }
+    }
+
+    function selectEdgeType(edge) {
+        selectedEdgeType = edge;
+        console.log("Selected edge type " + edge);
+        $('#add-data-triple-predikat-btn-text').text(edge);
+    }
+
+
+    function buildAutoSuggestion() {
+        data = allVertices;
+        var states = [];
+        data.forEach(function (elem) {
+            states.push(elem.name + " (" + elem.type + ")");
+            map[elem.name + " (" + elem.type + ")"] = elem["__id"];
+            map_reverse[elem["__id"]] = elem.name;
+        });
+
+        states = new Bloodhound({
+            datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            limit: 25,
+            // `states` is an array of state names defined in "The Basics"
+            local: $.map(states, function (state) {
+                return {value: state};
+            })
+        });
+
+        function changeToSuccess(id, textId) {
+            var tag = $(id);
+            tag.addClass("has-success");
+            tag.removeClass("has-error");
+            if (textId !== undefined) {
+                $(textId).invisible();
+            }
+        }
+
+        function changeToFailure(id, textId) {
+            var tag = $(id);
+            tag.addClass("has-error");
+            tag.removeClass("has-success");
+            if (textId !== undefined) {
+                $(textId).visible();
+            }
+        }
+
+        // kicks off the loading/processing of `local` and `prefetch`
+        states.initialize();
+
+        addDropDown(spreadingActivationCompanyInput, "#searchbox-error-text", "#spreading-activation-searchbox");
+        addDropDown(ndInputA, "#network-distance-error-text-a", "#network-distance-searchbox");
+        addDropDown(ndInputB, "#network-distance-error-text-b", "#network-distance-searchbox");
+
+        addDropDown(addInputA, "#add-data-triple-subject-error-text", "#network-distance-searchbox");
+        addDropDown(addInputB, "#add-data-triple-object-error-text", "#network-distance-searchbox");
+
+        function addDropDown(tag, inputErrorText, searchBox) {
+            tag.typeahead('destroy');
+            tag.typeahead({
+                        hint: true,
+                        highlight: true,
+                        minLength: 1
+                    },
+                    {
+                        name: 'states',
+                        displayKey: 'value',
+                        source: states.ttAdapter()
+                    }).on('typeahead:selected', function (event, data) {
+                        console.log('selected item' + map[data.value]);
+                        changeToSuccess(searchBox, inputErrorText);
+                        selectedCompany[tag.attr('id')] = map[data.value];
+                        selectedCompany[tag.attr('id') + "_name"] = data.value;
+                    })/*.on('typeahead:closed', function (event, data) {
+             var val = tag.val();
+             if (map[val] === undefined) {
+             tag.focus();
+             changeToFailure(searchBox, inputErrorText);
+             }
+             console.log('selected item' + map[val]);
+             selectedCompany[tag.attr('id')] = map[val];
+             });*/
+
+            tag.blur(function () {
+                tag.val(selectedCompany[tag.attr('id') + "_name"]);
+            })
+        }
+    }
+
     (function() {
         $.getJSON('data.json', function (data) {
-            var states = [];
-            data.forEach(function (elem) {
-                states.push(elem.name + " (" + elem.type + ")");
-                map[elem.name + " (" + elem.type + ")"] = elem["__id"];
-                map_reverse[elem["__id"]] = elem.name;
-            });
+            allVertices = data;
+            buildAutoSuggestion();
+        });
 
-            states = new Bloodhound({
-                datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
-                queryTokenizer: Bloodhound.tokenizers.whitespace,
-                limit: 25,
-                // `states` is an array of state names defined in "The Basics"
-                local: $.map(states, function (state) {
-                    return {value: state};
-                })
-            });
 
-            function changeToSuccess(id, textId) {
-                var tag = $(id);
-                tag.addClass("has-success");
-                tag.removeClass("has-error");
-                if (textId !== undefined) {
-                    $(textId).invisible();
-                }
-            }
+        $.getJSON('edgeTypes.json', function (data) {
+            allEdgesTypes = data;
+            createEdgesDropDown();
+        });
 
-            function changeToFailure(id, textId) {
-                var tag = $(id);
-                tag.addClass("has-error");
-                tag.removeClass("has-success");
-                if (textId !== undefined) {
-                    $(textId).visible();
-                }
-            }
+        $('#add-data-triple-subject').focus(function() {
+            $('#add-data-triple-subject').popover('show');
+        });
 
-            // kicks off the loading/processing of `local` and `prefetch`
-            states.initialize();
-
-            addDropDown(spreadingActivationCompanyInput, "#searchbox-error-text", "#spreading-activation-searchbox");
-            addDropDown(ndInputA, "#network-distance-error-text-a", "#network-distance-searchbox");
-            addDropDown(ndInputB, "#network-distance-error-text-b", "#network-distance-searchbox");
-
-            function addDropDown(tag, inputErrorText, searchBox) {
-                tag.typeahead({
-                            hint: true,
-                            highlight: true,
-                            minLength: 1
-                        },
-                        {
-                            name: 'states',
-                            displayKey: 'value',
-                            source: states.ttAdapter()
-                        }).on('typeahead:selected', function (event, data) {
-                            console.log('selected item' + map[data.value]);
-                            changeToSuccess(searchBox, inputErrorText);
-                            selectedCompany[tag.attr('id')] = map[data.value];
-                            selectedCompany[tag.attr('id') + "_name"] = data.value;
-                        })/*.on('typeahead:closed', function (event, data) {
-                            var val = tag.val();
-                            if (map[val] === undefined) {
-                                tag.focus();
-                                changeToFailure(searchBox, inputErrorText);
-                            }
-                            console.log('selected item' + map[val]);
-                            selectedCompany[tag.attr('id')] = map[val];
-                        });*/
-
-                tag.blur(function () {
-                    tag.val(selectedCompany[tag.attr('id') + "_name"]);
-                })
+        $.getJSON('vertexTypes.json', function (data) {
+            // ignore them because you can not search for all of them
+            data = ["Organization","City","Category","keyword","Region","Country","Person","TeamMember","Founder","Advisor"];
+            data.sort();
+            for(var i=0; i < data.length; i++) {
+                $("#new-vertex-type-dropdown-list").prepend('<li role="presentation"><a role="menuitem" tabindex="-1" href="#" id="vertex-type-' + data[i] + '">' + data[i] + '</a></li>')
+                $("#vertex-type-" + data[i]).click((function() {
+                    var vertex = data[i];
+                    return function() {
+                        $("#new-vertex-type-dropdown-text").text(vertex);
+                    }
+                })());
             }
         });
+
     })();
 
     function spreading_activation() {
@@ -407,6 +575,104 @@
 
     var lastMessageND = undefined;
 
+    var addNewEdgeType = false;
+    var addNewVertexType = false;
+
+    function showModal(inputId) {
+        $(inputId).click(function(e) {
+            $('#myModal').modal('show');
+            addNewVertexType = true;
+            e.preventDefault();
+        });
+        $("#new-vertex-save").click(function(e) {
+            if (addNewVertexType) {
+                addNewVertexType = false;
+                var vertex = {};
+                vertex.__id = $("#new-vertex-id").val();
+                vertex.name = $("#new-vertex-name").val();
+                vertex.type = $("#new-vertex-type-dropdown-text").text();
+                allVertices.push(vertex);
+                console.log("New vertex");
+                console.log(vertex);
+                $('#myModal').modal('hide');
+                e.preventDefault();
+                buildAutoSuggestion();
+                $.ajax({
+                    type: "POST",
+                    url: "/vertices/",
+                    data: JSON.stringify(vertex),
+                    success: function (data, status) {
+                        if (status === "success") {
+                            $.toaster({priority: 'success', title: 'Success', message: 'vertex successfully created'});
+                        } else {
+                            $.toaster({priority: 'danger', title: 'Error', message: 'Something went rong'});
+                        }
+                    },
+                    contentType: "application/json;charset=utf-8"
+                });
+            }
+        });
+    };
+
+    $('#add-data-triple-subject-popover').on('shown.bs.popover', function () {
+        showModal("#show-input-Subject")
+    });
+
+    $('#add-data-triple-object-popover').on('shown.bs.popover', function () {
+        showModal("#show-input-Object")
+    });
+
+    $('#add-data-triple-predikat-wrapper').on('shown.bs.popover', function () {
+        $('#showFormForEdgeTypes').click(function(e) {
+            $('#new-edge-type-name').val('');
+            $('#addEdgeTypesModal').modal('show');
+            addNewEdgeType = true;
+            e.preventDefault();
+        });
+        $('#add-edge-type-save').click(function(e) {
+            if (addNewEdgeType) {
+                addNewEdgeType = false;
+                var newEdgeType = $('#new-edge-type-name').val();
+                newEdgeType.trim();
+                newEdgeType.replace("/\s/g", '');
+                allEdgesTypes.push(newEdgeType);
+                createEdgesDropDown(newEdgeType);
+                $('#addEdgeTypesModal').modal('hide');
+                e.preventDefault();
+            }
+        });
+    });
+
+    $("#add-data-triple-form-button").click(function(e) {
+        var source = selectedCompany["add-data-triple-subject"];
+        var target = selectedCompany["add-data-triple-object"];
+        var type = $("#add-data-triple-predikat-btn-text").text();
+        var edge = {
+            source: source,
+            target: target,
+            type: type
+        };
+        console.log(edge);
+        $.ajax({
+            type: "POST",
+            url: "/edges/",
+            data: JSON.stringify(edge),
+            success: function(data, status) {
+                if (status === "success") {
+                    $.toaster({ priority : 'success', title : 'Title', message : 'edge successfully created'});
+                } else {
+                    $.toaster({ priority : 'danger', title : 'Error', message : 'Something went rong'});
+                }
+            },
+            contentType: "application/json;charset=utf-8"
+        });
+        e.preventDefault();
+    });
+
+
+    $(document).ready(function(){
+        $('[data-toggle="popover"]').popover();
+    });
 
 </script>
 </body>

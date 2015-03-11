@@ -20,6 +20,7 @@
 #include <execinfo.h>
 #include <errno.h>
 #include <cxxabi.h>
+#include <AddressBook/AddressBook.h>
 
 using namespace std;
 using namespace SimpleWeb;
@@ -27,6 +28,18 @@ using namespace SimpleWeb;
 using namespace boost::property_tree;
 
 std::string data_json;
+std::string edges_type_json;
+std::string vertex_type_json;
+
+bool fileExist(const std::string & filename) {
+    ifstream f(filename.c_str());
+    if (f.good()) {
+        f.close();
+        return true;
+    } else {
+        f.close();
+        return false;
+    }  }
 
 static inline void printStackTrace( FILE *out = stderr, unsigned int max_frames = 63 )
 {
@@ -107,7 +120,7 @@ void handler(int sig) {
     exit(sig);
 }
 
-void start_server(oc::graph& g, oc::spreading_activation sa, oc::distance_algorithm da, int port = 8080) {
+void start_server(oc::graph& g, oc::spreading_activation sa, oc::distance_algorithm da, std::string data_path, int port = 8080) {
     //HTTP-server at port 8080 using 4 threads
     Server<HTTP> server(port, 4);
 
@@ -172,6 +185,70 @@ void start_server(oc::graph& g, oc::spreading_activation sa, oc::distance_algori
         }
     };
 
+    server.resource["^/vertices/?$"]["POST"]=[&](ostream& response, shared_ptr<Server<HTTP>::Request> request) {
+        try {
+            ptree pt;
+            read_json(request->content, pt);
+
+            string id=pt.get<string>("__id");
+            string name=pt.get<string>("name");
+            string type=pt.get<string>("type");
+
+            oc::vertex* v = g.get_vertex(id);
+            v->add_property("type", type);
+            v->add_property("name", name);
+
+            bool exists = fileExist(data_path + "/custom_vertices.csv");
+
+            std::ofstream f(data_path + "/custom_vertices.csv", std::ifstream::out | std::fstream::app);
+
+            if (!exists) {
+                f << "\"id\",\"name\",\"type\"";
+            }
+
+            f << std::endl << "\"" << id << "\",\"" << name << "\",\"" << type << "\"";
+
+            response << "HTTP/1.1 201 Created\r\nContent-Length: 0" << "\r\n\r\n";
+
+            std::cout << "Saved vertex: " << "\"" << id << "\",\"" << name << "\",\"" << type << "\"" << std::endl;
+        }
+        catch(exception& e) {
+            response << "HTTP/1.1 400 Bad Request\r\nContent-Length: " << strlen(e.what()) << "\r\n\r\n" << e.what();
+        }
+    };
+
+    server.resource["^/edges/?$"]["POST"]=[&](ostream& response, shared_ptr<Server<HTTP>::Request> request) {
+        try {
+            ptree pt;
+            read_json(request->content, pt);
+
+            string source=pt.get<string>("source");
+            string target=pt.get<string>("target");
+            string type=pt.get<string>("type");
+
+            oc::vertex* s = g.get_vertex(source);
+            oc::vertex* t = g.get_vertex(target);
+            s->add_out(t, type);
+
+            bool exists = fileExist(data_path + "/custom_edges.csv");
+
+            std::ofstream f(data_path + "/custom_edges.csv", std::ifstream::out | std::fstream::app);
+
+            if (!exists) {
+                f << "\"src\",\"dst\",\"type\"";
+            }
+
+            f << std::endl << "\"" << source << "\",\"" << target << "\",\"" << type << "\"";
+
+            response << "HTTP/1.1 201 Created\r\nContent-Length: 0" << "\r\n\r\n";
+
+            std::cout << "Saved edge " << "\"" << source << "\",\"" << target << "\",\"" << type << "\"" << std::endl;
+        }
+        catch(exception& e) {
+            response << "HTTP/1.1 400 Bad Request\r\nContent-Length: " << strlen(e.what()) << "\r\n\r\n" << e.what();
+        }
+    };
+
     //GET-example for the path /info
     //Responds with request-information
     server.resource["^/info/?$"]["GET"]=[](ostream& response, shared_ptr<Server<HTTP>::Request> request) {
@@ -195,6 +272,20 @@ void start_server(oc::graph& g, oc::spreading_activation sa, oc::distance_algori
         response << "HTTP/1.1 200 OK\r\n"
                  << "Content-Type: application/json\r\n"
                  << "Content-Length: " << data_json.length() << "\r\n\r\n" << data_json;
+    };
+
+    server.resource["^/edgeTypes.json$"]["GET"]=[](ostream& response, shared_ptr<Server<HTTP>::Request> request) {
+        std::cout << "Sending data.json" << std::endl;
+        response << "HTTP/1.1 200 OK\r\n"
+                << "Content-Type: application/json\r\n"
+                << "Content-Length: " << edges_type_json.length() << "\r\n\r\n" << edges_type_json;
+    };
+
+    server.resource["^/vertexTypes.json$"]["GET"]=[](ostream& response, shared_ptr<Server<HTTP>::Request> request) {
+        std::cout << "Sending data.json" << std::endl;
+        response << "HTTP/1.1 200 OK\r\n"
+                << "Content-Type: application/json\r\n"
+                << "Content-Length: " << vertex_type_json.length() << "\r\n\r\n" << vertex_type_json;
     };
 
     //Default GET-example. If no other matches, this anonymous function will be called.
@@ -266,6 +357,14 @@ void init(oc::graph& g, const std::string& data_path) {
 
     g.add_edges_by_file(data_path + "edges_dump.csv");
 
+    if (fileExist(data_path + "custom_edges.csv")) {
+        g.add_edges_by_file(data_path + "custom_edges.csv", ",");
+    }
+
+    if (fileExist(data_path + "custom_vertices.csv")) {
+        g.add_vertices_by_file(data_path + "custom_vertices.csv", {"id"});
+    }
+
     end = std::chrono::system_clock::now();
     std::cout << "Parsed all in " << std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count() <<
             " ms" << std::endl;
@@ -308,6 +407,49 @@ std::string build_auto_suggest(oc::graph& g) {
     return result + "]";
 }
 
+std::string build_auto_suggest_edges(oc::graph& g) {
+    std::vector<oc::vertex*> vertices = g.get_vertices();
+    std::vector<std::string> types;
+    for (auto v : vertices) {
+        vector<oc::relationship> rel_out = v->get_rel_out();
+        for (auto r : rel_out) {
+            if (r.get_type() != "") types.push_back(r.get_type());
+        }
+    }
+
+    std::sort(types.begin(),types.end());
+    types.erase(std::unique(types.begin(),types.end()),types.end());
+    std::string result = "[";
+    bool first = true;
+    for (auto s : types) {
+        if (first) first = false;
+        else result += ",";
+        result += "\"" + s + "\"";
+    }
+    return result + "]";
+}
+
+std::string build_auto_suggest_vertex(oc::graph& g) {
+    std::vector<oc::vertex*> vertices = g.get_vertices();
+    std::vector<std::string> types;
+    for (auto v : vertices) {
+        if (v->get_property("type") != "") {
+            types.push_back(v->get_property("type"));
+        }
+    }
+
+    std::sort(types.begin(),types.end());
+    types.erase(std::unique(types.begin(),types.end()),types.end());
+    std::string result = "[";
+    bool first = true;
+    for (auto s : types) {
+        if (first) first = false;
+        else result += ",";
+        result += "\"" + s + "\"";
+    }
+    return result + "]";
+}
+
 
 int main(int argc, char* argv[]) {
     signal(SIGSEGV, handler);
@@ -336,8 +478,10 @@ int main(int argc, char* argv[]) {
     init(g,data_path);
 
     data_json = build_auto_suggest(g);
+    edges_type_json = build_auto_suggest_edges(g);
+    vertex_type_json = build_auto_suggest_vertex(g);
 
-    start_server(g, spreading_activation, distance_algorithm, port);
+    start_server(g, spreading_activation, distance_algorithm, data_path, port);
 
     return 0;
 }

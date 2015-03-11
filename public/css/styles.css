@@ -87,12 +87,16 @@
     margin: 0;
 }
 
-#spreading-activation-company-input{
+#spreading-activation-company-input {
     width:500px;
 }
 
-#network-distance-company-input-a, #network-distance-company-input-b {
+#network-distance-company-input-a, #network-distance-company-input-b, #add-data-triple-subject, #add-data-triple-predikat, #add-data-triple-object, #add-data-triple-predikat-list {
     width: 580px
+}
+
+#add-data-triple-predikat {
+    text-align: left;
 }
 
 .container {
